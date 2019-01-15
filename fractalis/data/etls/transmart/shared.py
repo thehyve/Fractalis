@@ -70,9 +70,14 @@ def transform_clinical(raw_data: dict, value_field: str) -> pd.DataFrame:
     for entry in raw_data['cells']:
         patient_element = entry['dimensionIndexes'][patient_idx]
         patient = get_dimension_element(raw_data, 'patient', patient_element)
+        patient_id = None
+        if 'subjectIds' in patient and 'SUBJ_ID' in patient['subjectIds']:
+          patient_id = patient['subjectIds']['SUBJ_ID']
+        else:
+          patient_id = patient['inTrialId']
 
         rows.append([
-            patient['inTrialId'],
+            patient_id,
             entry[value_field]
         ])
 
