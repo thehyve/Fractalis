@@ -28,6 +28,10 @@ class AdaHandler(ETLHandler):
                                 descriptor['data_set'])
 
     def _get_token_for_credentials(self, server: str, auth: dict) -> str:
+        request_token = auth.get('token')
+        if isinstance(request_token, str) and len(request_token) > 0:
+            return request_token
+
         try:
             user = auth['user']
             passwd = auth['passwd']

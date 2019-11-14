@@ -7,8 +7,6 @@ import logging
 from uuid import uuid4
 from typing import List, Union
 
-from werkzeug.exceptions import Unauthorized
-
 from fractalis.cleanup import janitor
 from fractalis import app, redis, celery
 from fractalis.data.etl import ETL
@@ -52,19 +50,11 @@ class ETLHandler(metaclass=abc.ABCMeta):
         if server.endswith('/'):
             server = server[:-1]
         self._server = server
-        # if no token is given we have to get one
         try:
-            self._token = auth.get('token')
-            if not isinstance(self._token, str) or len(self._token) == 0:
-                raise KeyError
-        except KeyError:
-            logger.info('No token has been provided. '
-                        'Attempting to authenticate with the API.')
-            try:
-                self._token = self._get_token_for_credentials(server, auth)
-            except Exception as e:
-                logger.exception(e)
-                raise ValueError(f"Could not authenticate with API. {e}")
+            self._token = self._get_token_for_credentials(server, auth)
+        except Exception as e:
+            logger.exception(e)
+            raise ValueError(f"Could not authenticate with API. {e}")
 
     @staticmethod
     @abc.abstractmethod

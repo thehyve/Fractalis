@@ -1,6 +1,6 @@
 import functools
-from enum import Enum
 from functools import wraps
+
 import requests
 import jwt
 from flask import request, jsonify
@@ -9,36 +9,45 @@ import json
 
 from jwt.algorithms import RSAAlgorithm
 from werkzeug.exceptions import Unauthorized
+from fractalis import app
 
 logger = logging.getLogger(__name__)
-AuthServiceType = Enum('AuthServiceType', 'OIDC TRANSMART', module=__name__)
 
 
 def authorized(f):
     @wraps(f)
     def _wrap(*args, **kwargs):
-        try:
-            payload = request.get_json(force=True)
-            auth = payload.get('auth')
-            token = auth.get('token') if len(auth) != 0 else ''
-            if len(token) == 0:
-                error = "No token in the authentication object."
-                logger.error(error)
-                raise Unauthorized(error)
-            decoded_token = jwt.decode(token, verify=False)
-
-            user = validate_user(decoded_token, auth)
-            identity_provider_url = validate_identity_provider_url(decoded_token, auth)
-            auth_service_type = auth.get('authServiceType', '').upper()
-            if auth_service_type == AuthServiceType.OIDC.name:
-                validate_token(token,  auth.get('oidcClientId'), identity_provider_url)
-            else:
-                logger.warning(f'Token not validated. Validation not supported for "{auth_service_type}" service type')
-        except Exception as e:
-            return jsonify({'error': f'Access unauthorized. {str(e)}'}), 403
-        logger.info(f'Connected: {decoded_token.get("email")!r}, user id (sub): {user!r}')
+        disabled = app.config.get('AUTHORIZATION_DISABLED', False)
+        if not disabled:
+            try:
+                authorize()
+            except Exception as e:
+                return jsonify({'error': f'Access unauthorized. {str(e)}'}), 403
+        else:
+            logger.warning(f'Token not validated! Authorization based on the access token is disabled.')
         return f(*args, **kwargs)
+
+    def authorize():
+        token = get_request_token()
+        if not token or len(token) == 0:
+            error = "No token in the authentication object."
+            logger.error(error)
+            raise Unauthorized(error)
+        decoded_token = jwt.decode(token, verify=False)
+        client_id = app.config.get('OIDC_CLIENT_ID')
+        url = app.config.get('OIDC_SERVAUTH_SERVICE_TYPEER_URL')
+        # user = validate_user(decoded_token) #TODO - validate with session user
+        identity_provider_url = validate_identity_provider_url(decoded_token, url)
+        validate_token(token, client_id, identity_provider_url)
+        logger.info(f'Connected: {decoded_token.get("email")!r}, user id (sub): {decoded_token.get("sub")!r}')
+
     return _wrap
+
+
+def get_request_token():
+    payload = request.get_json(force=True)
+    auth = payload.get('auth')
+    return auth.get('token')
 
 
 def validate_identity_provider_url(decoded_token, auth) -> str:
@@ -49,7 +58,7 @@ def validate_identity_provider_url(decoded_token, auth) -> str:
              Unauthorized if urls do not match
     """
     token_issuer = f'{decoded_token.get("iss")}/protocol/openid-connect'
-    identity_provider_url = auth.get('oidcServerUrl')
+    identity_provider_url = app.config.get('OIDC_SERVER_URL')
     if token_issuer != identity_provider_url:
         error = "Token issuer does not match the identity provider url from authentication object parameter."
         logger.error(error)
@@ -57,17 +66,16 @@ def validate_identity_provider_url(decoded_token, auth) -> str:
     return identity_provider_url
 
 
-def validate_user(decoded_token, auth):
-    """ Checks if the current user (in the token) matches the user from authentication object
+def validate_user(decoded_token):
+    """ Checks if the current user (in the token) matches the session user
     :param decoded_token: decoded user token
-    :param auth: authentication object from the request arguments
     :return: user or
              Unauthorized if users do not match
     """
     subject = decoded_token.get('sub')
-    user = auth.get('user')
+    user = '' # TODO get session user
     if user != subject:
-        error = "Token user does not match the user from authentication object parameter."
+        error = "Token user does not match the session user."
         logger.error(error)
         raise Unauthorized(error)
     return user

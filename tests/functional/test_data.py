@@ -27,6 +27,7 @@ class TestData:
         sync.cleanup_all()
         from fractalis import app
         app.testing = True
+        app.config['AUTH_SERVICE_URL'] = 'transmart'
         with app.test_client() as test_client:
             yield test_client
             sync.cleanup_all()

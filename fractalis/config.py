@@ -35,4 +35,12 @@ FRACTALIS_LOG_CONFIG = os.path.join(os.path.dirname(__file__), 'logging.yaml')
 # Whether to verify the certs of https data sources
 ETL_VERIFY_SSL_CERT = False
 
+# Authorization
+# Disable the authorization based on the user access token. Not recommended!
+AUTHORIZATION_DISABLED = False
+# OIDC refresh token enabling an offline access
+OIDC_OFFLINE_TOKEN = '<your_offline_token>'
+OIDC_SERVER_URL = 'https://keycloak-example.com/auth/realms/transmart-realm/'
+OIDC_CLIENT_ID = 'transmart-client'
+
 # DO NOT MODIFY THIS FILE DIRECTLY

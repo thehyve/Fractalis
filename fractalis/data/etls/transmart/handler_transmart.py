@@ -2,15 +2,16 @@
 tranSMART."""
 
 import logging
-from enum import Enum
+from typing import Dict
+
+import jwt
 import requests
 
+from fractalis import app
 from fractalis.data.etlhandler import ETLHandler
 
 
 logger = logging.getLogger(__name__)
-
-AuthServiceType = Enum('AuthServiceType', 'OIDC TRANSMART', module=__name__)
 
 
 class TransmartHandler(ETLHandler):
@@ -31,60 +32,81 @@ class TransmartHandler(ETLHandler):
         return descriptor['label']
 
     @staticmethod
-    def retrieve_token(url: str, client_id: str, user: str, passwd: str) -> str:
-        """
-        Retrieve access token from the server.
-        """
-        r = requests.post(url=url,
-                          params={
-                              'grant_type': 'password',
-                              'client_id': client_id,
-                              'client_secret': '',
-                              'username': user,
-                              'password': passwd
-                          },
-                          headers={'Accept': 'application/json'},
-                          timeout=10)
-        if r.status_code != 200:
-            error = "Could not authenticate. " \
-                    "Reason: [{}]: {}".format(r.status_code, r.text)
-            logger.error(error)
-            raise ValueError(error)
-        try:
-            response = r.json()
-        except Exception:
-            error = "Could not authenticate. " \
-                    "Got unexpected response: '{}'".format(r.text)
-            logger.error(error)
-            raise ValueError(error)
-        return response['access_token']
-
-    @staticmethod
     def get_auth_value(auth: dict, property_name: str) -> str:
         value = auth.get(property_name, '')
         if len(value) == 0:
             raise KeyError(f'The authentication object must contain the non-empty field: "{property_name}"')
         return value
 
-    def get_client_id_and_url(self, server: str, auth: dict, ) -> (str, str):
-        auth_service_type = self.get_auth_value(auth, 'authServiceType').upper()
-        if auth_service_type == AuthServiceType.OIDC.name:
-            client_id = self.get_auth_value(auth, 'oidcClientId')
-            url = self.get_auth_value(auth, 'oidcServerUrl')
-        elif auth_service_type == AuthServiceType.TRANSMART.name:
-            client_id = 'glowingbear-js'
-            url = server + '/oauth/token'
-        else:
-            raise KeyError("The authentication service type in authentication object has to be one of "
-                           "'oidc', 'transmart'")
-        return client_id, url
-
-    def _get_token_for_credentials(self, server: str, auth: dict) -> str:
+    @staticmethod
+    def get_access_token(url: str, params: Dict) -> str:
+        """
+        Get access token from authorization server
+        :param url: authorization server URL
+        :param params: request body params
+        :return: access token
+        """
+        response = requests.post(url=url, data=params, headers={'Accept': 'application/json'})
+        if not response.ok:
+            error = "Could not get a token from OIDC server. " \
+                    "Reason: [{}]: {}".format(response.status_code, response.text)
+            logger.error(error)
+            raise ValueError(error)
         try:
-            user = self.get_auth_value(auth, 'user')
-            passwd = self.get_auth_value(auth, 'passwd')
-            client_id, url = self.get_client_id_and_url(server, auth)
+            json_response = response.json()
+            return json_response['access_token']
+        except Exception:
+            error = "Could not retrieve the access token from {}. " \
+                    "Got unexpected response: '{}'".format(url, response.text)
+            logger.error(error)
+            raise ValueError(error)
+
+    @staticmethod
+    def get_access_token_by_offline_token(offline_token: str, url: str, client_id: str) -> str:
+        """
+        Get access token based on offline token
+        :return: offline user's access token
+        """
+        handle = f'{url}/protocol/openid-connect/token'
+        params = {'grant_type': 'refresh_token',
+                  'scope': 'offline_access',
+                  'client_id': f'{client_id}',
+                  'refresh_token': f'{offline_token}'}
+        return TransmartHandler.get_access_token(handle, params)
+
+    @staticmethod
+    def exchange_offline_token_for_user_token(offline_token: str, user: str) -> str:
+        """
+        Exchange offline token to user access token using impersonation
+        :param offline_token: offline token acting as a refresh token
+        :param user: current user
+        :return: current user's access token
+        """
+        try:
+            client_id = app.config.get('OIDC_CLIENT_ID')
+            url = app.config.get('OIDC_SERVER_URL')
+            offline_user_access_token = TransmartHandler.get_access_token_by_offline_token(
+                offline_token, url, client_id)
+            handle = f'{url}/protocol/openid-connect/token'
+            params = {'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+                      'requested_subject': user,
+                      'client_id': f'{client_id}',
+                      'subject_token': offline_user_access_token}
+            return TransmartHandler.get_access_token(handle, params)
         except KeyError as e:
             logger.error(e)
             raise ValueError(e)
-        return self.retrieve_token(url, client_id, user, passwd)
+
+    def _get_token_for_credentials(self, server: str, auth: dict) -> str:
+        token = TransmartHandler.get_auth_value(auth, 'token')
+        if token:
+            offline_token = app.config.get('OIDC_OFFLINE_TOKEN', '')
+            logger.error(f'Offline token: ${offline_token}.')
+            if offline_token and len(offline_token) > 0:
+                decoded_token = jwt.decode(token, verify=False)
+                user = decoded_token.get('sub')
+                return self.exchange_offline_token_for_user_token(offline_token, user)
+            else:
+                return token
+        raise ValueError("No token in the authentication object.")
+
