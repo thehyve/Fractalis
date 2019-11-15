@@ -40,6 +40,7 @@ setup(
         'pytest-cov',
         'responses',
         'twine',
-        'pyjwt==1.6.3'
+        'cryptography==2.6.1',
+        'pyjwt==1.7.1'
     ]
 )
