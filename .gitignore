@@ -13,3 +13,6 @@ dist/
 dump.rdb
 venv/
 .pytest_cache/
+build/
+htmlcov/
+coverage.xml
