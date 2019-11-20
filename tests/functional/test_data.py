@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 from functools import wraps
 import flask
 import pytest
-from fractalis import app, redis, sync, authorization
+from fractalis import app, redis, sync
 
 
 def mock_authorization():
@@ -27,7 +27,6 @@ class TestData:
         sync.cleanup_all()
         from fractalis import app
         app.testing = True
-        app.config['AUTH_SERVICE_URL'] = 'transmart'
         with app.test_client() as test_client:
             yield test_client
             sync.cleanup_all()
@@ -37,7 +36,7 @@ class TestData:
         return {
             'handler': 'test',
             'server': 'localhost:1234',
-            'auth': {'token': 'fail' if fail else '7746391376142672192764'},
+            'auth': {'token': None if fail else '7746391376142672192764'},
             'descriptors': [{
                 'data_type': 'default',
                 'concept': str(uuid4())
@@ -49,7 +48,7 @@ class TestData:
         return {
             'handler': 'test',
             'server': 'localhost:1234',
-            'auth': {'token': 'fail' if fail else '7746391376142672192764'},
+            'auth': {'token': None if fail else '7746391376142672192764'},
             'descriptors': [
                 {
                     'data_type': 'default',
@@ -152,7 +151,6 @@ class TestData:
             'descriptors': request.param['descriptors']
         }))
 
-    @patch('fractalis.authorization.authorized', side_effect=mock_authorization)
     def test_400_on_invalid_payload(self, bad_post):
         assert bad_post().status_code == 400
 

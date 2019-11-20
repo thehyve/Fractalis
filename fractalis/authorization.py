@@ -35,7 +35,7 @@ def authorized(f):
             raise Unauthorized(error)
         decoded_token = jwt.decode(token, verify=False)
         client_id = app.config.get('OIDC_CLIENT_ID')
-        url = app.config.get('OIDC_SERVAUTH_SERVICE_TYPEER_URL')
+        url = app.config.get('OIDC_SERVER_URL')
         # user = validate_user(decoded_token) #TODO - validate with session user
         identity_provider_url = validate_identity_provider_url(decoded_token, url)
         validate_token(token, client_id, identity_provider_url)

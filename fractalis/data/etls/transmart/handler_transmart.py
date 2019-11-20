@@ -99,7 +99,7 @@ class TransmartHandler(ETLHandler):
 
     def _get_token_for_credentials(self, server: str, auth: dict) -> str:
         token = TransmartHandler.get_auth_value(auth, 'token')
-        if token:
+        if token and len(token) > 0:
             offline_token = app.config.get('OIDC_OFFLINE_TOKEN', '')
             logger.error(f'Offline token: ${offline_token}.')
             if offline_token and len(offline_token) > 0:
