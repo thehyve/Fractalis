@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @data_blueprint.route('', methods=['POST'])
 @validate_json
 @validate_schema(create_data_schema)
+@authorized
 def create_data_task() -> Tuple[Response, int]:
     """Submit new ETL tasks based on the payload of the request body.
     See doc/api/ for more information.

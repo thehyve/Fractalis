@@ -1,5 +1,6 @@
 import functools
 from functools import wraps
+from typing import Optional
 
 import requests
 import jwt
@@ -44,9 +45,13 @@ def authorized(f):
     return _wrap
 
 
-def get_request_token():
+def get_request_token() -> Optional[str]:
     payload = request.get_json(force=True)
-    auth = payload.get('auth')
+    auth = payload.get('auth', '')
+    if not auth or len(auth) == 0:
+        error = f'Request body missing "auth" element.'
+        logger.error(error)
+        raise ValueError(error)
     return auth.get('token')
 
 
