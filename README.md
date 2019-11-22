@@ -31,6 +31,19 @@ Tip: Use the [default settings](fractalis/config.py) as an example for your own 
 Please note, that all this files combines [Flask settings](http://flask.pocoo.org/docs/0.12/config/), [Celery settings](http://docs.celeryproject.org/en/latest/userguide/configuration.html), and Fractalis settings, which are all listed and documented within this file. 
 Please don't overwrite default settings if you don't know what you are doing. This might have severe implications for security or might cause Fractalis to not work correctly.
 
+
+#### Authorization
+
+Configuration options for authorization, currently specific to the transmart handler:
+
+| Configuration          | Default value | Description                                                                                             |
+|------------------------|---------------|---------------------------------------------------------------------------------------------------------|
+| AUTHORIZATION_DISABLED | False         | Disable validation of an access token from a request. Disabling is not recommended!                     |
+| OIDC_OFFLINE_TOKEN     | None          | OIDC refresh token enabling an offline access. Used to refresh user tokens to prevent early expiration. |
+| OIDC_SERVER_URL        |               | OIDC server URL, including the realm e.g. https://keycloak-example.com/auth/realms/transmart-realm/     |
+| OIDC_CLIENT_ID         |               | ID of the OIDC client                                                                                   |
+
+
 ### Add support for new services
 Please refer to [this document](fractalis/data).
 

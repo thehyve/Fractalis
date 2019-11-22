@@ -25,6 +25,7 @@ class TestAnalytics:
 
     @pytest.fixture(scope='function')
     def small_data_post(self, test_client):
+        app.config['AUTHORIZATION_DISABLED'] = True
         return lambda random, wait=0: test_client.post(
             '/data?wait={}'.format(wait), data=flask.json.dumps(dict(
                 handler='test',

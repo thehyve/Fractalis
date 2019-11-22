@@ -2,6 +2,7 @@
 
 import pytest
 import responses
+from fractalis import sync, app
 
 from fractalis.data.etls.transmart.handler_transmart import TransmartHandler
 
@@ -9,33 +10,20 @@ from fractalis.data.etls.transmart.handler_transmart import TransmartHandler
 # noinspection PyMissingOrEmptyDocstring,PyMissingTypeHints
 class TestTransmartHandler:
 
+    @pytest.fixture(scope='function')
+    def token(self):
+        return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0Ijox' \
+               'NTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+
     @pytest.fixture(scope='function', params=[
         {'server': 'http://foo.bar', 'auth': ''},
         {'server': 'http://foo.bar', 'auth': {}},
         {'server': 'http://foo.bar', 'auth': {'abc': 'abc'}},
         {'server': 'http://foo.bar', 'auth': {'token': ''}},
         {'server': 'http://foo.bar', 'auth': {'token': object}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo'}},
-        {'server': 'http://foo.bar', 'auth': {'passwd': 'foo'}},
-        {'server': 'http://foo.bar', 'auth': {'user': '', 'passwd': ''}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': ''}},
-        {'server': 'http://foo.bar', 'auth': {'user': '', 'passwd': 'foo'}},
-        {'server': 'http://foo.bar',
-         'auth': {'user': '', 'passwd': '', 'foo': 'bar'}},
         {'server': '', 'auth': {'token': 'foo'}},
         {'server': object, 'auth': {'token': 'foo'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': ''}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'random_name'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'Oidc'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'oidc',
-                                              'oidcClientId': '', 'oidcServerUrl': 'http://foo.bar/oauth/token'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'oidc',
-                                              'oidcServerUrl': 'http://foo.bar/oauth/token'}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'oidc',
-                                              'oidcClientId': 'test_client', 'oidcServerUrl': ''}},
-        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar', 'authServiceType': 'oidc',
-                                              'oidcClientId': 'test_client'}}
+        {'server': 'http://foo.bar', 'auth': {'user': 'foo', 'passwd': 'bar'}}
     ])
     def bad_init_args(self, request):
         return request.param
@@ -44,54 +32,54 @@ class TestTransmartHandler:
         with pytest.raises(ValueError):
             TransmartHandler(**bad_init_args)
 
-    def test_auth_raises_exception_for_invalid_args(self):
-        with pytest.raises(ValueError) as e:
-            TransmartHandler(server='http://foo.bar',
-                             auth={'user': 'foo', 'passwd': 'bar', 'authServiceType': 'test_server_name'})
-        assert 'Could not authenticate with API. "The authentication service type in authentication object has to be ' \
-               'one of \'oidc\', \'transmart\'"' in str(e.value)
-
     def test_returns_token_for_credentials(self):
-        with responses.RequestsMock() as response:
-            response.add(response.POST, 'http://foo.bar/oauth/token',
-                         body='{"access_token":"foo-token","token_type":"bearer","expires_in":43185,"scope":"read write"}',  # noqa: 501
-                         status=200,
-                         content_type='application/json')
-            tmh = TransmartHandler(server='http://foo.bar',
-                                   auth={'user': 'foo', 'passwd': 'bar', 'authServiceType': 'transmart'})
-            assert tmh._token == 'foo-token'
+        app.config['OIDC_OFFLINE_TOKEN'] = ''
+        tmh = TransmartHandler(server='http://foo.bar',
+                               auth={'token': 'foo-token'})
+        assert tmh._token == 'foo-token'
 
-    def test_returns_token_for_credentials_oidc(self):
-        with responses.RequestsMock() as response:
-            response.add(response.POST, 'http://foo.bar.oidc/oauth/token',
-                         body='{"access_token":"foo-token","token_type":"bearer","expires_in":43185,"scope":"read write"}',  # noqa: 501
-                         status=200,
-                         content_type='application/json')
-            tmh = TransmartHandler(server='http://foo.bar',
-                                   auth={'user': 'foo', 'passwd': 'bar', 'authServiceType': 'oidc',
-                                         'oidcClientId': 'test_client',
-                                         'oidcServerUrl': 'http://foo.bar.oidc/oauth/token'})
-            assert tmh._token == 'foo-token'
+    def test_returns_refreshed_token_for_credentials(self, token):
+        with app.app_context():
+            app.config['OIDC_OFFLINE_TOKEN'] = 'test-offline-token'
+            app.config['OIDC_CLIENT_ID'] = 'test_client'
+            app.config['OIDC_SERVER_URL'] = 'http://foo.bar.oidc/auth/realms/transmart-realm'
 
-    def test_auth_raises_exception_for_non_json_return(self):
-        with responses.RequestsMock() as response:
-            response.add(response.POST, 'http://foo.bar/oauth/token',
-                         body='123{//}',
-                         status=200,
-                         content_type='application/json')
-            with pytest.raises(ValueError) as e:
-                TransmartHandler(server='http://foo.bar',
-                                 auth={'user': 'foo', 'passwd': 'bar', 'authServiceType': 'transmart'})
-            assert 'unexpected response' in str(e.value)
+            with responses.RequestsMock() as response:
+                response.add(response.POST, 'http://foo.bar.oidc/auth/realms/transmart-realm/protocol/openid-connect/token',
+                             body='{"access_token":"foo-token","token_type":"bearer","expires_in":43185,'
+                                  '"scope":"read write"}',
+                             status=200,
+                             content_type='application/json')
+                tmh = TransmartHandler(server='http://foo.bar',
+                                       auth={'token': token})
+                assert tmh._token == 'foo-token'
 
-    def test_auth_raises_exception_for_non_200_return(self):
-        with responses.RequestsMock() as response:
-            response.add(response.POST, 'http://foo.bar/oauth/token',
-                         body='something',
-                         status=400,
-                         content_type='application/json')
-            with pytest.raises(ValueError) as e:
-                TransmartHandler(server='http://foo.bar',
-                                 auth={'user': 'foo', 'passwd': 'bar', 'authServiceType': 'transmart'})
-            assert '[400]' in str(e.value)
+    def test_auth_raises_exception_for_non_json_return(self, token):
+        with app.app_context():
+            app.config['OIDC_OFFLINE_TOKEN'] = 'test-offline'
+            app.config['OIDC_CLIENT_ID'] = 'test_client'
+            app.config['OIDC_SERVER_URL'] = 'http://foo.bar.oidc/auth/realms/transmart-realm'
+            with responses.RequestsMock() as response:
+                response.add(response.POST, 'http://foo.bar.oidc/auth/realms/transmart-realm/protocol/openid-connect/token',
+                             body='123{//}',
+                             status=200,
+                             content_type='application/json')
+                with pytest.raises(ValueError) as e:
+                    TransmartHandler(server='http://foo.bar',
+                                     auth={'token': token})
+                assert 'unexpected response' in str(e.value)
 
+    def test_auth_raises_exception_for_non_200_return(self, token):
+        with app.app_context():
+            app.config['OIDC_OFFLINE_TOKEN'] = 'test-offline-token'
+            app.config['OIDC_CLIENT_ID'] = 'test_client'
+            app.config['OIDC_SERVER_URL'] = 'http://foo.bar.oidc/auth/realms/transmart-realm'
+
+            with responses.RequestsMock() as response:
+                response.add(response.POST, 'http://foo.bar.oidc/auth/realms/transmart-realm/protocol/openid-connect/token',
+                             body='Some error',
+                             status=400,
+                             content_type='application/json')
+                with pytest.raises(ValueError) as e:
+                    TransmartHandler(server='http://foo.bar', auth={'token': token})
+                assert '[400]' in str(e.value)
