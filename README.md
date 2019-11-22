@@ -39,7 +39,7 @@ Configuration options for authorization, currently specific to the transmart han
 | Configuration          | Default value | Description                                                                                             |
 |------------------------|---------------|---------------------------------------------------------------------------------------------------------|
 | AUTHORIZATION_DISABLED | False         | Disable validation of an access token from a request. Disabling is not recommended!                     |
-| OIDC_OFFLINE_TOKEN     |               | OIDC refresh token enabling an offline access. Used to refresh user tokens to prevent early expiration. |
+| OIDC_OFFLINE_TOKEN     | None          | OIDC refresh token enabling an offline access. Used to refresh user tokens to prevent early expiration. |
 | OIDC_SERVER_URL        |               | OIDC server URL, including the realm e.g. https://keycloak-example.com/auth/realms/transmart-realm/     |
 | OIDC_CLIENT_ID         |               | ID of the OIDC client                                                                                   |
 

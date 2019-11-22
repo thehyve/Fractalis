@@ -39,7 +39,7 @@ ETL_VERIFY_SSL_CERT = False
 # Disable the authorization based on the user access token. Not recommended!
 AUTHORIZATION_DISABLED = False
 # OIDC refresh token enabling an offline access
-OIDC_OFFLINE_TOKEN = '<your_offline_token>'
+OIDC_OFFLINE_TOKEN = None
 OIDC_SERVER_URL = 'https://keycloak-example.com/auth/realms/transmart-realm/'
 OIDC_CLIENT_ID = 'transmart-client'
 
