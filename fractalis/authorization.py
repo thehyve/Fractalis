@@ -62,10 +62,10 @@ def validate_identity_provider_url(decoded_token, auth) -> str:
     :return: identity_provider_url or
              Unauthorized if urls do not match
     """
-    token_issuer = f'{decoded_token.get("iss")}/protocol/openid-connect'
+    token_issuer = f'{decoded_token.get("iss")}'
     identity_provider_url = app.config.get('OIDC_SERVER_URL')
     if token_issuer != identity_provider_url:
-        error = "Token issuer does not match the identity provider url from authentication object parameter."
+        error = f'Token issuer: {token_issuer} does not match configured identity provider url.'
         logger.error(error)
         raise Unauthorized(error)
     return identity_provider_url
@@ -112,7 +112,7 @@ def retrieve_keycloak_public_key_and_algorithm(token_kid: str, oidc_server_url: 
     :param oidc_server_url:  Url of the server to authorize with
     :return: keycloak public key and algorithm
     """
-    handle = f'{oidc_server_url}/certs'
+    handle = f'{oidc_server_url}/protocol/openid-connect/certs'
     logger.info(f'Getting public key for the kid={token_kid} from the keycloak...')
     r = requests.get(handle)
     if r.status_code != 200:
@@ -124,7 +124,7 @@ def retrieve_keycloak_public_key_and_algorithm(token_kid: str, oidc_server_url: 
         json_response = r.json()
     except Exception:
         error = "Could not retrieve the public key. " \
-                 "Got unexpected response: '{}'".format(r.text)
+                "Got unexpected response: '{}'".format(r.text)
         logger.error(error)
         raise ValueError(error)
     try:
