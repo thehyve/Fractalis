@@ -65,7 +65,9 @@ class TestNumericalETL:
             "dimensionElements": {"patient": [{"id": 1000421548, "deathDate": None, "birthDate": None,
                                                "race": None, "maritalStatus": None, "inTrialId": "3052", "age": 52,
                                                "trial": "GSE4382", "subjectIds": {'SUBJ_ID': 'P1'},
-                                               "sexCd": None, "sex": "unknown", "religion": None}]}  # noqa: 501
+                                               "sexCd": None, "sex": "unknown", "religion": None}],  # noqa: E501
+                                  "concept": [{"conceptPath": "\\Demographics\\Age\\", "conceptCode": "ag1",
+                                               "name": "Age"}]}
         }
         with responses.RequestsMock() as response:
             response.add(response.POST, 'http://foo.bar/v2/observations',
