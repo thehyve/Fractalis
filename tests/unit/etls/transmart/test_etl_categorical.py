@@ -76,5 +76,5 @@ class TestCategoricalETL:
                                         token='', descriptor=self.descriptor)
             df = self.etl.transform(raw_data=raw_data, descriptor=self.descriptor)
             assert df.shape == (1, 3)
-            assert df.values.tolist() == [['P1', 'value', 'FOO']]
+            assert df.values.tolist() == [['P1', 'Age', 'FOO']]
             assert list(df) == ['id', 'feature', 'value']

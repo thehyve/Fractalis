@@ -77,5 +77,5 @@ class TestNumericalETL:
                                         token='', descriptor=self.descriptor)
             df = self.etl.transform(raw_data=raw_data, descriptor=self.descriptor)
             assert df.shape == (1, 3)
-            assert df.values.tolist() == [['P1', 'value', 52.0]]
+            assert df.values.tolist() == [['P1', 'Age', 52.0]]
             assert list(df) == ['id', 'feature', 'value']
