@@ -24,7 +24,8 @@ class TestBoxplotAnalytics:
                                  transformation='identity',
                                  categories=[],
                                  id_filter=[],
-                                 subsets=[])
+                                 subsets=[],
+                                 subset_labels=[])
         json.dumps(results)  # check if result is json serializable
         assert 'data' in results
         assert 'statistics' in results
@@ -56,7 +57,7 @@ class TestBoxplotAnalytics:
                             columns=['id', 'feature', 'value'])
         results = self.task.main(features=[df_1, df_2], categories=[],
                                  transformation='identity',
-                                 id_filter=[], subsets=[])
+                                 id_filter=[], subsets=[], subset_labels=[])
         df = pd.DataFrame.from_dict(json.loads(results['data']))
         assert np.all(df['outlier'] == [True, False, False, False, True,
                                         False, False, False, True])
@@ -70,7 +71,7 @@ class TestBoxplotAnalytics:
                           columns=['id', 'feature', 'value'])
         results = self.task.main(features=[df], categories=[],
                                  transformation='identity',
-                                 id_filter=[], subsets=[])
+                                 id_filter=[], subsets=[], subset_labels=[])
         assert results['statistics']['foo////s1']['median'] == 2
 
     def test_can_handle_groups_with_only_nan(self):
@@ -90,6 +91,6 @@ class TestBoxplotAnalytics:
                                   columns=['id', 'feature', 'value'])
         results = self.task.main(features=[df], categories=[categories],
                                  transformation='identity',
-                                 id_filter=[], subsets=[])
+                                 id_filter=[], subsets=[], subset_labels=[])
         assert 'foo//female//s1' in results['statistics']
         assert 'foo//male//s1' not in results['statistics']

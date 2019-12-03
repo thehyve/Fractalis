@@ -28,7 +28,8 @@ class PCATask(AnalyticTask):
              categories: List[pd.DataFrame],
              whiten: bool,
              id_filter: List[T],
-             subsets: List[List[T]]) -> dict:
+             subsets: List[List[T]],
+             subset_labels: List[str]) -> dict:
         # merge input data into single df
         df = reduce(lambda a, b: a.append(b), features)
 
@@ -70,7 +71,7 @@ class PCATask(AnalyticTask):
         reduced_df['id'] = ids
 
         # add category and subset column
-        reduced_df = utils.apply_subsets(df=reduced_df, subsets=subsets)
+        reduced_df = utils.apply_subsets(df=reduced_df, subsets=subsets, subset_labels=subset_labels)
         reduced_df = utils.apply_categories(df=reduced_df,
                                             categories=categories)
 

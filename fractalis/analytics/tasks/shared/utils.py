@@ -13,23 +13,31 @@ logger = logging.getLogger(__name__)
 
 
 def apply_subsets(df: pd.DataFrame,
-                  subsets: List[List[str]]) -> pd.DataFrame:
-    """Build a new DataFrame that contains a new column 'subset' defining
-    the subset the data point belongs to. If a data point belongs to
+                  subsets: List[List[str]],
+                  subset_labels: List[str]) -> pd.DataFrame:
+    """Build a new DataFrame that contains new columns: 'subset' defining
+    the subset the data point belongs to and 'subset_label'. If a data point belongs to
     multiple subsets then the row is duplicated.
     :param df: The DataFrame used as a base.
     :param subsets: The subsets defined by the user.
+    :param subset_labels: The custom subset labels or empty array.
     :return: The new DataFrame with an additional 'subset' column.
     """
     if not subsets:
         subsets = [df['id']]
+
+    if len(subset_labels) and len(subset_labels) != len(subsets):
+        raise ValueError("Number of subset labels does not match given subsets.")
+
     _df = pd.DataFrame()
     for i, subset in enumerate(subsets):
         df_subset = df[df['id'].isin(subset)]
         if not df_subset.shape[0]:
             continue
         subset_col = [i] * df_subset.shape[0]
-        df_subset = df_subset.assign(subset=subset_col)
+        subset_label_col = [subset_labels[i]] * df_subset.shape[0] \
+            if len(subset_labels) else [f's{i + 1}'] * df_subset.shape[0]
+        df_subset = df_subset.assign(subset=subset_col, subset_label=subset_label_col)
         _df = _df.append(df_subset)
     if _df.shape[0] == 0:
         raise ValueError("No data match given subsets.")

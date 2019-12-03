@@ -1,5 +1,6 @@
 """Module containing the Celery task for Boxplot statistics."""
 
+import logging
 from typing import List, TypeVar
 from functools import reduce
 
@@ -25,7 +26,8 @@ class BoxplotTask(AnalyticTask):
              categories: List[pd.DataFrame],
              id_filter: List[T],
              transformation: str,
-             subsets: List[List[T]]) -> dict:
+             subsets: List[List[T]],
+             subset_labels: List[str]) -> dict:
         """ Compute boxplot statistics for the given parameters.
         :param features: List of numerical features
         :param categories: List of categorical features used to group numerical
@@ -35,6 +37,7 @@ class BoxplotTask(AnalyticTask):
         :param transformation: Transformation that will be applied to the data.
         :param subsets: List of subsets used as another way to group the
         numerical features.
+        :param subset_labels: Optional list of subset labels
         """
         if not len(features):
             raise ValueError("Must at least specify one "
@@ -44,15 +47,17 @@ class BoxplotTask(AnalyticTask):
         df = utils.apply_transformation(df=df, transformation=transformation)
         df.dropna(inplace=True)
         df = utils.apply_id_filter(df=df, id_filter=id_filter)
-        df = utils.apply_subsets(df=df, subsets=subsets)
+        df = utils.apply_subsets(df=df, subsets=subsets, subset_labels=subset_labels)
         df = utils.apply_categories(df=df, categories=categories)
         df['outlier'] = None
         results = {
             'statistics': {},
             'features': df['feature'].unique().tolist(),
             'categories': df['category'].unique().tolist(),
-            'subsets': df['subset'].unique().tolist()
+            'subsets': df['subset'].unique().tolist(),
+            'subset_labels': df['subset_label'].unique().tolist()
         }
+        subset_labels = df['subset_label'].unique().tolist()
         group_values = []
         for feature in results['features']:
             for subset in results['subsets']:
@@ -63,7 +68,7 @@ class BoxplotTask(AnalyticTask):
                     if len(values) < 2:
                         continue
                     # FIXME: v This is ugly. Look at kaplan_meier_survival.py
-                    label = '{}//{}//s{}'.format(feature, category, subset + 1)
+                    label = '{}//{}//{}'.format(feature, category, subset_labels[subset])
                     group_values.append(values)
                     stats = self.boxplot_statistics(values)
                     u_outliers = np.array(values) > stats['u_wsk']
@@ -77,6 +82,7 @@ class BoxplotTask(AnalyticTask):
                                      stop=stats['u_wsk'], num=100)
                     stats['kde'] = kde(xs).tolist()
                     results['statistics'][label] = stats
+        del df['subset_label']
         results['data'] = df.to_json(orient='records')
         f_value, p_value = scipy.stats.f_oneway(*group_values)
         results['anova'] = {

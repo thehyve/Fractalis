@@ -23,6 +23,7 @@ class TestCorrelation:
                                 id_filter=[],
                                 method='pearson',
                                 subsets=[],
+                                subset_labels=[],
                                 categories=[])
         assert result['coef'] == 1
         assert result['p_value'] == 0
@@ -35,6 +36,7 @@ class TestCorrelation:
         data = json.loads(result['data'])
         assert 'id' in data[0]
         assert 'subset' in data[0]
+        assert 'subset_label' in data[0]
         assert 'feature_x' in data[0]
         assert 'feature_y' in data[0]
         assert 'value_x' in data[0]
@@ -51,9 +53,10 @@ class TestCorrelation:
                                 id_filter=[101, 102, 104],
                                 method='pearson',
                                 subsets=[[101, 102, 103], [102, 103, 104]],
+                                subset_labels=[],
                                 categories=[])
         df = pd.DataFrame(json.loads(result['data']))
-        assert df.shape == (4, 7)
+        assert df.shape == (4, 8)
 
     def test_empty_subset_equals_full_subset(self):
         x = pd.DataFrame([[101, 'foo', 1], [102, 'foo', 2], [103, 'foo', 3],
@@ -65,14 +68,31 @@ class TestCorrelation:
                                   id_filter=[101, 102, 104],
                                   method='pearson',
                                   subsets=[[101, 102, 103, 104]],
+                                  subset_labels=['s1'],
                                   categories=[])
         result_2 = self.task.main(x=x,
                                   y=y,
                                   id_filter=[101, 104, 102],
                                   method='pearson',
                                   subsets=[],
+                                  subset_labels=[],
                                   categories=[])
         assert result_1 == result_2
+
+    def test_raises_for_not_matching_labels(self):
+        x = pd.DataFrame([[101, 'foo', 1], [102, 'foo', 2], [103, 'foo', 3],
+                          [104, 'foo', 4]], columns=['id', 'feature', 'value'])
+        y = pd.DataFrame([[101, 'bar', 1], [102, 'bar', 2], [103, 'bar', 3],
+                          [104, 'bar', 4]], columns=['id', 'feature', 'value'])
+        with pytest.raises(ValueError) as e:
+            self.task.main(x=x,
+                           y=y,
+                           id_filter=[],
+                           method='foo',
+                           subsets=[[101, 102]],
+                           subset_labels=['sub1', 'test2', 'test'],
+                           categories=[])
+            assert 'Number of subset labels does not match given subsets.' in e
 
     def test_raises_for_unknown_method(self):
         x = pd.DataFrame([[101, 'foo', 1], [102, 'foo', 2], [103, 'foo', 3],
@@ -85,6 +105,7 @@ class TestCorrelation:
                            id_filter=[],
                            method='foo',
                            subsets=[],
+                           subset_labels=[],
                            categories=[])
             assert 'Unknown method' in e
 
@@ -99,6 +120,7 @@ class TestCorrelation:
                            id_filter=[],
                            method='pearson',
                            subsets=[],
+                           subset_labels=[],
                            categories=[])
             assert 'do not share any ids' in e
 
@@ -112,5 +134,6 @@ class TestCorrelation:
                                 id_filter=[],
                                 method='pearson',
                                 subsets=[[101], [102, 104], [103], []],
+                                subset_labels=[],
                                 categories=[])
         assert not np.isnan(result['coef'])
