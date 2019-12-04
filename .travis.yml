@@ -1,17 +1,17 @@
 language: python
 python:
   - "3.6"
-dist: xenial
+  - "3.7"
 
 addons:
   apt:
     sources:
     - r-packages-trusty
     packages:
-    - r-base
     - gfortran
     - libblas-dev
     - liblapack-dev
+    - r-base
     - rabbitmq-server
 
 cache:
@@ -40,4 +40,4 @@ script:
   - export FRACTALIS_CONFIG=$HOME/config.py
   - cat ${FRACTALIS_CONFIG}
   - celery worker -D -A fractalis:celery -l debug --concurrency=1
-  - pytest
+  - python setup.py test

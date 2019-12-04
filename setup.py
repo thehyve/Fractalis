@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='fractalis',
@@ -14,33 +13,38 @@ setup(
     include_package_data=True,
     python_requires='>=3.6.0',
     install_requires=[
-        'Flask==0.12.2',
-        'flask-cors==3.0.3',
+        'Flask==1.1.1',
+        'flask-cors==3.0.8',
         'Flask-Script==2.0.6',
         'flask-request-id-middleware==1.1',
         'flask-compress==1.4.0',
-        'typing==3.6.2',
-        'jsonschema==2.6.0',
-        'celery[redis]==4.1.0',
-        'kombu==4.1.0',
-        'redis==2.10.6',
-        'numpy==1.13.3',
-        'scipy==0.19.1',
-        'pandas==0.20.3',
-        'scikit-learn==0.19.1',
-        'lifelines==0.14.3',
-        'requests==2.18.4',
-        'PyYAML==3.12',
-        'pycryptodomex==3.4.7',
-        'rpy2==2.9.3',
+        'jsonschema==3.2.0',
+        'celery[redis]==4.3.0',
+        'kombu==4.6.6',
+        'redis==3.2.1',
+        'numpy>=1.14.3,<1.15.0',
+        'scipy==1.3.2',
+        'pandas>=0.25.1,<0.26.0',
+        'scikit-learn==0.21.3',
+        'lifelines==0.23.0',
+        'requests==2.22.0',
+        'PyYAML>=5.1,<5.2',
+        'pycryptodomex==3.9.4',
+        'rpy2==2.9.5',  # 3.2.2 requires some changes in array_stats.py
         'tzlocal',
-        'flake8',
-        'pytest',
-        'pytest-runner',
-        'pytest-cov',
-        'responses',
-        'twine',
         'cryptography==2.6.1',
         'pyjwt==1.7.1'
+    ],
+    setup_requires=[
+        'pytest-runner',
+        'twine',
+        # dependency for `python setup.py bdist_wheel`
+        'wheel'
+    ],
+    tests_require=[
+        'flake8',
+        'pytest',
+        'pytest-cov',
+        'responses'
     ]
 )
