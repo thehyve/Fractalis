@@ -20,10 +20,12 @@ class TestSurvivalTask:
                                  event_observed=[],
                                  estimator='KaplanMeier',
                                  id_filter=[],
-                                 subsets=[])
+                                 subsets=[],
+                                 subset_labels=['test'])
         assert results['label'] == 'duration'
         assert len(results['categories']) == 1
         assert len(results['subsets']) == 1
+        assert len(results['subset_labels']) == 1
         assert results['stats'][''][0]['timeline']
         assert results['stats'][''][0]['estimate']
         assert results['stats'][''][0]['ci_lower']
@@ -47,10 +49,12 @@ class TestSurvivalTask:
                                  event_observed=[event_observed],
                                  estimator='NelsonAalen',
                                  id_filter=[],
-                                 subsets=[])
+                                 subsets=[],
+                                 subset_labels=['x'])
         assert results['label'] == 'duration'
         assert len(results['categories']) == 2
         assert len(results['subsets']) == 1
+        assert len(results['subset_labels']) == 1
         assert results['stats']['control'][0]['timeline']
         assert results['stats']['control'][0]['estimate']
         assert results['stats']['control'][0]['ci_lower']
@@ -72,7 +76,8 @@ class TestSurvivalTask:
                        event_observed=[],
                        estimator='KaplanMeier',
                        id_filter=[],
-                       subsets=[])
+                       subsets=[],
+                       subset_labels=[])
 
     def test_can_handle_empty_groups(self):
         df = load_waltons()
@@ -90,6 +95,7 @@ class TestSurvivalTask:
                                  event_observed=[],
                                  estimator='KaplanMeier',
                                  id_filter=[],
-                                 subsets=[subset1, subset2])
+                                 subsets=[subset1, subset2],
+                                 subset_labels=['test label 1', 'test label 2'])
         assert not results['stats']['miR-137'].get(0)
         assert not results['stats']['control'].get(1)

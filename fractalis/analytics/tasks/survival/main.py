@@ -25,7 +25,8 @@ class SurvivalTask(AnalyticTask):
              event_observed: List[pd.DataFrame],
              estimator: str,
              id_filter: List[str],
-             subsets: List[List[str]]) -> dict:
+             subsets: List[List[str]],
+             subset_labels: List[str]) -> dict:
         # TODO: Docstring
         if len(durations) != 1:
             error = 'Analysis requires exactly one array that specifies the ' \
@@ -40,7 +41,7 @@ class SurvivalTask(AnalyticTask):
         df = durations[0]
         df.dropna(inplace=True)
         df = utils.apply_id_filter(df=df, id_filter=id_filter)
-        df = utils.apply_subsets(df=df, subsets=subsets)
+        df = utils.apply_subsets(df=df, subsets=subsets, subset_labels=subset_labels)
         df = utils.apply_categories(df=df, categories=categories)
 
         stats = {}
@@ -97,5 +98,6 @@ class SurvivalTask(AnalyticTask):
             'label': df['feature'].tolist()[0],
             'categories': categories,
             'subsets': subsets,
+            'subset_labels': subset_labels,
             'stats': stats
         }

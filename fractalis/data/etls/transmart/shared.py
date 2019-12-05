@@ -65,20 +65,27 @@ def get_dimension_element(obs, dimension, index):
 
 def transform_clinical(raw_data: dict, value_field: str) -> pd.DataFrame:
     patient_idx = get_dimension_index(raw_data, 'patient')
+    concept_idx = get_dimension_index(raw_data, 'concept')
     rows = []
 
     for entry in raw_data['cells']:
         patient_element = entry['dimensionIndexes'][patient_idx]
         patient = get_dimension_element(raw_data, 'patient', patient_element)
 
+        concept_element = entry['dimensionIndexes'][concept_idx]
+        concept = get_dimension_element(raw_data, 'concept', concept_element)
+
+        if patient['subjectIds'] and patient['subjectIds']['SUBJ_ID']:
+            patient_id = patient['subjectIds']['SUBJ_ID']
+        else:
+            patient_id = patient['inTrialId']
         rows.append([
-            patient['inTrialId'],
-            entry[value_field]
+            patient_id,
+            f'{concept["name"]}',
+            entry.get(value_field, None)
         ])
 
-    df = pd.DataFrame(rows, columns=['id', 'value'])
-    feature = df.columns[1]
-    df.insert(1, 'feature', feature)
+    df = pd.DataFrame(rows, columns=['id', 'feature', 'value'])
     return df
 
 

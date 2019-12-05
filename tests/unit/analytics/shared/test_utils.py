@@ -14,8 +14,9 @@ class TestCommonTasks:
         df = pd.DataFrame([[101, 'foo', 1], [102, 'foo', 2], [103, 'foo', 3]],
                           columns=['id', 'feature', 'value'])
         subsets = [[101, 102], [], [103, 102, 104]]
-        result = utils.apply_subsets(df=df, subsets=subsets)
+        result = utils.apply_subsets(df=df, subsets=subsets, subset_labels=[])
         assert result['subset'].tolist() == [0, 0, 2, 2]
+        assert result['subset_label'].tolist() == ['s1', 's1', 's3', 's3']
 
     def test_apply_categorys(self):
         df = pd.DataFrame([[101, 'foo', 1], [102, 'foo', 2], [103, 'foo', 3]],

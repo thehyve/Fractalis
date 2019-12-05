@@ -34,7 +34,8 @@ class TestPCATask:
                                 categories=categories,
                                 whiten=False,
                                 id_filter=[],
-                                subsets=[])
+                                subsets=[],
+                                subset_labels=[])
         data = result['data']
         assert 0 in data
         assert 1 in data
@@ -43,6 +44,7 @@ class TestPCATask:
         assert 'id' in data
         assert data['id'] == [101, 102, 103, 104, 105]
         assert data['subset'] == [0, 0, 0, 0, 0]
+        assert data['subset_label'] == ['s1', 's1', 's1', 's1', 's1']
         np.testing.assert_equal(data['category'],
                                 ['a', 'a', float('nan'), 'a', float('nan')])
 
@@ -58,7 +60,8 @@ class TestPCATask:
                                 categories=[],
                                 whiten=False,
                                 id_filter=[101, 104],
-                                subsets=[])
+                                subsets=[],
+                                subset_labels=[])
         data = result['data']
         assert all(np.unique(data['id']) == [101, 104])
 
@@ -74,7 +77,8 @@ class TestPCATask:
                                 categories=[],
                                 whiten=False,
                                 id_filter=[],
-                                subsets=[])
+                                subsets=[],
+                                subset_labels=[])
         loadings = result['loadings']
         assert loadings[0][0] == -loadings[0][1]
         assert loadings[1][0] == loadings[1][1]
@@ -91,6 +95,7 @@ class TestPCATask:
                                 categories=[],
                                 whiten=False,
                                 id_filter=[],
-                                subsets=[])
+                                subsets=[],
+                                subset_labels=[])
         variance_ratios = result['variance_ratios']
         assert variance_ratios == [1, 0]

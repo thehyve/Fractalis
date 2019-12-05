@@ -27,6 +27,7 @@ class HistogramTask(AnalyticTask):
              num_bins: int,
              id_filter: List[str],
              subsets: List[List[str]],
+             subset_labels: List[str],
              data: pd.DataFrame,
              categories: List[pd.DataFrame]) -> dict:
         """Compute several basic statistics such as bin size and kde.
@@ -34,6 +35,7 @@ class HistogramTask(AnalyticTask):
         :param num_bins: Number of bins to use for histogram.
         :param id_filter: If specified use only given ids during the analysis.
         :param subsets: List of lists of subset ids.
+        :param subset_labels: Optional list of subset labels.
         :param data: Numerical values to create histogram of.
         :param categories: The groups to split the values into.
         """
@@ -45,11 +47,12 @@ class HistogramTask(AnalyticTask):
             logger.exception(error)
             raise ValueError(error)
         df = utils.apply_id_filter(df=df, id_filter=id_filter)
-        df = utils.apply_subsets(df=df, subsets=subsets)
+        df = utils.apply_subsets(df=df, subsets=subsets, subset_labels=subset_labels)
         df = utils.apply_categories(df=df, categories=categories)
         stats = {}
         categories = df['category'].unique().tolist()
         subsets = df['subset'].unique().tolist()
+        subset_labels = df['subset_label'].unique().tolist()
         for category in categories:
             for subset in subsets:
                 sub_df = df[(df['category'] == category) &
@@ -86,6 +89,7 @@ class HistogramTask(AnalyticTask):
             'data': df.to_json(orient='records'),
             'stats': stats,
             'subsets': subsets,
+            'subset_labels': subset_labels,
             'categories': categories,
             'label': df['feature'].tolist()[0]
         }

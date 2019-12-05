@@ -37,10 +37,11 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[cat_df])
         assert all([key in result for key in
-                    ['stats', 'subsets', 'categories', 'label']])
+                    ['stats', 'subsets', 'subset_labels', 'categories', 'label']])
         assert 'A' in result['stats']
         assert 'B' in result['stats']
         assert 0 in result['stats']['A']
@@ -63,6 +64,7 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[])
         assert result['stats'][''][0]['median'] == 6
@@ -84,6 +86,7 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[])
         assert result['stats'][''][0]['median'] == 0
@@ -116,6 +119,7 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[cat_df])
         assert 'A' not in result['stats']
@@ -147,6 +151,7 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[cat_df])
         assert 'A' not in result['stats']
@@ -180,6 +185,7 @@ class TestHistogramTask:
                            bw_factor=0.5,
                            num_bins=10,
                            subsets=[],
+                           subset_labels=[],
                            data=df,
                            categories=[cat_df])
             assert 'selected numerical variable must be non-empty' in e
@@ -211,6 +217,7 @@ class TestHistogramTask:
                                 bw_factor=0.5,
                                 num_bins=10,
                                 subsets=[],
+                                subset_labels=[],
                                 data=df,
                                 categories=[cat_df])
         json.dumps(result)
