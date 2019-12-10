@@ -2,13 +2,13 @@
 
 import json
 import os
-from unittest import mock
-from unittest.mock import patch
 from uuid import UUID, uuid4
-from functools import wraps
+
 import flask
 import pytest
+
 from fractalis import app, redis, sync
+
 
 # noinspection PyMissingOrEmptyDocstring, PyMissingTypeHints
 class TestData:
@@ -26,8 +26,7 @@ class TestData:
     @staticmethod
     def small_load(fail=False):
         return {
-            'handler': 'test',
-            'server': 'localhost:1234',
+            'service': 'test-service',
             'auth': {'token': '' if fail else '7746391376142672192764'},
             'descriptors': [{
                 'data_type': 'default',
@@ -38,8 +37,7 @@ class TestData:
     @staticmethod
     def big_load(fail=False):
         return {
-            'handler': 'test',
-            'server': 'localhost:1234',
+            'service': 'test-service',
             'auth': {'token': '' if fail else '7746391376142672192764'},
             'descriptors': [
                 {
@@ -75,70 +73,59 @@ class TestData:
 
     @pytest.fixture(scope='function', params=[
         {
-            'handler': '',
-            'server': 'localhost',
+            'service': '',
             'auth': '{"''tok"n'"" '12345678"90',
             'descriptors': '[{"data_type": "default", "concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': '',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': '[{"data_type": "default", "concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '',
             'descriptors': '[{"data_type": "default", "concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': ''
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': '[{"data_type": "default", "concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': '[{"concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': '[{"data_type": "default"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "1234567890"}',
             'descriptors': '[{"data_type": "", "concept": "GSE1234"}]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{"token": "234567890"}',
             'descriptors': '[]'
         },
         {
-            'handler': 'test',
-            'server': 'localhost',
+            'service': 'test-service',
             'auth': '{}',
             'descriptors': '[{"data_type": "default", "concept": "GSE1234"}]'
         }
     ])
     def bad_post(self, test_client, request):
         return lambda: test_client.post('/data', data=flask.json.dumps({
-            'handler': request.param['handler'],
-            'server': request.param['server'],
+            'service': request.param['service'],
             'auth': request.param['auth'],
             'descriptors': request.param['descriptors']
         }))
@@ -393,12 +380,12 @@ class TestData:
             assert rv.status_code == 200
             assert 'features' in body['meta']
 
-    def test_403_if_no_token_on_get_meta(self, test_client, faiload):
+    def test_400_if_no_token_on_get_meta(self, test_client, faiload):
         app.config['AUTHORIZATION_DISABLED'] = False
         rv = test_client.post('/data?wait=1', data=faiload['serialized'])
         body = flask.json.loads(rv.get_data())
-        assert rv.status_code == 403
-        assert 'Access unauthorized.' in body['error']
+        assert rv.status_code == 400
+        assert 'Either token or user and password is required in the auth object.' in body['error']
         keys = redis.keys('data:*')
         assert len(keys) == 0
 

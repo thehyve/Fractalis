@@ -4,6 +4,7 @@ import pandas as pd
 import random
 
 from fractalis.data.etl import ETL
+from fractalis.data_services_config import Handler
 
 
 class RandomCategoricalETL(ETL):
@@ -12,8 +13,8 @@ class RandomCategoricalETL(ETL):
     produces = 'categorical'
 
     @staticmethod
-    def can_handle(handler: str, descriptor: dict) -> bool:
-        return handler == 'test' and \
+    def can_handle(handler: Handler, descriptor: dict) -> bool:
+        return handler == Handler.TEST and \
                descriptor['data_type'] == 'categorical'
 
     def extract(self, server: str,

@@ -4,9 +4,8 @@ Documentation: http://stackoverflow.com/questions/24238743/flask-decorator-to-ve
 from functools import wraps
 
 from flask import request, jsonify
+from pydantic import BaseModel, ValidationError
 from werkzeug.exceptions import BadRequest
-from jsonschema import validate
-from jsonschema.exceptions import ValidationError
 
 
 def validate_json(f):
@@ -23,15 +22,15 @@ def validate_json(f):
     return wrapper
 
 
-def validate_schema(schema):
+def validate_schema(schema_model: BaseModel):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             json = request.get_json(force=True)
             try:
-                validate(json, schema)
+                schema_model(**json)
             except ValidationError as e:
-                return jsonify({'error': e.message}), 400
+                return jsonify({'error': e.json()}), 400
             return f(*args, **kwargs)
         return wrapper
     return decorator

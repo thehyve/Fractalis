@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import flask
 import pytest
 
-from fractalis import redis, sync, celery
+from fractalis import redis, sync, celery, DataServices
 from fractalis.data.etlhandler import ETLHandler
 
 
@@ -14,19 +14,32 @@ from fractalis.data.etlhandler import ETLHandler
 class TestState:
 
     @pytest.fixture(scope='function')
-    def test_client(self):
+    def test_client(self, monkeypatch):
         sync.cleanup_all()
+        monkeypatch.setenv('FRACTALIS_CONFIG', './tests/test_config.py')
         from fractalis import app
         app.testing = True
+        services_config = {
+            'data_services': {
+                'test-service': {
+                    'handler': 'test',
+                    'server': 'http://localfoo'
+                }
+            }
+        }
+        app.data_services_config = DataServices(**services_config)
+        app.testing = True
+        app.data_services_config = DataServices(**services_config)
         with app.test_client() as test_client:
+            app.data_services_config = DataServices(**services_config)
             yield test_client
             sync.cleanup_all()
+            app.data_services_config = DataServices(**services_config)
 
     def test_400_if_no_task_id_in_payload(self, test_client):
         payload = {
             'state': {'abc': '$...foo'},
-            'handler': 'test',
-            'server': 'localfoo'
+            'service': 'test-service'
         }
         rv = test_client.post('/state', data=flask.json.dumps(payload))
         body = flask.json.loads(rv.get_data())
@@ -37,8 +50,7 @@ class TestState:
     def test_400_if_task_id_not_in_redis(self, test_client):
         payload = {
             'state': {'abc': '${}$'.format(uuid4())},
-            'handler': 'test',
-            'server': 'localfoo'
+            'service': 'test-service'
         }
         rv = test_client.post('/state', data=flask.json.dumps(payload))
         body = flask.json.loads(rv.get_data())
@@ -50,8 +62,7 @@ class TestState:
         uuid = str(uuid4())
         payload = {
             'state': {'test': ['${}$'.format(uuid), '${${}']},
-            'handler': 'test',
-            'server': 'localfoo'
+            'service': 'test-service'
         }
         redis.set(name='data:{}'.format(uuid),
                   value=json.dumps({'meta': {'descriptor': 'foo'}}))
@@ -70,8 +81,7 @@ class TestState:
             'state': {'test': ['${}$'.format(uuid1),
                                '${}$'.format(uuid1),
                                '${}$'.format(uuid2)]},
-            'handler': 'test',
-            'server': 'localfoo'
+            'service': 'test-service'
         }
         redis.set(name='data:{}'.format(uuid1),
                   value=json.dumps({'meta': {'descriptor': 'foo'}}))
@@ -92,14 +102,14 @@ class TestState:
     def test_400_if_payload_schema_incorrect_1(self, test_client):
         payload = {
             'state': {'test': ['${}$'.format(uuid4())]},
-            'server': 'localfoo'
+            'service': 'test-service'
         }
         rv = test_client.post('/state', data=flask.json.dumps(payload))
         assert 400 == rv.status_code
 
     def test_404_if_request_invalid_state_id(self, test_client):
         rv = test_client.post('/state/{}'.format(str(uuid4())),
-                              data=flask.json.dumps({'auth': {'token': ''}}))
+                              data=flask.json.dumps({'auth': {'token': 'test_token'}}))
         assert 404 == rv.status_code
         body = flask.json.loads(rv.get_data())
         assert 'error' in body
@@ -107,7 +117,8 @@ class TestState:
 
     def test_400_if_payload_schema_incorrect_2(self, test_client):
         payload = {
-            'auth': {}
+            'auth': {
+            }
         }
         rv = test_client.post('/state/{}'.format(str(uuid4())),
                               data=flask.json.dumps(payload))
@@ -116,8 +127,7 @@ class TestState:
     def test_request_state_acces_works(self, test_client):
         meta_state = {
             'state': {'foo': ['$123$', '$456$']},
-            'handler': 'test',
-            'server': 'localfoo',
+            'service': 'test-service',
             'task_ids': ['123', '456'],
             'descriptors': [
                 {'data_type': 'default'},
@@ -131,7 +141,7 @@ class TestState:
             assert not sess['data_tasks']
             assert not sess['state_access']
         rv = test_client.post('/state/{}'.format(uuid),
-                              data=flask.json.dumps({'auth': {'token': ''}}))
+                              data=flask.json.dumps({'auth': {'token': 'test_token'}}))
         body = flask.json.loads(rv.get_data())
         assert 202 == rv.status_code, body
         assert not body
@@ -151,8 +161,7 @@ class TestState:
         uuid2 = str(uuid4())
         meta_state = {
             'state': {'foo': ['${}$'.format(uuid1), '${}$'.format(uuid2)]},
-            'handler': 'test',
-            'server': 'localfoo',
+            'service': 'test-service',
             'task_ids': [uuid1, uuid2],
             'descriptors': [
                 {'data_type': 'default'},
@@ -166,7 +175,7 @@ class TestState:
             assert not sess['data_tasks']
             assert not sess['state_access']
         rv = test_client.post('/state/{}'.format(uuid),
-                              data=flask.json.dumps({'auth': {'token': ''}}))
+                              data=flask.json.dumps({'auth': {'token': 'test_token'}}))
         body = flask.json.loads(rv.get_data())
         assert 202 == rv.status_code, body
         assert not body
@@ -184,12 +193,10 @@ class TestState:
         uuid2 = str(uuid4())
         descriptor_1 = {'data_type': 'default', 'id': 1}
         descriptor_2 = {'data_type': 'default', 'id': 2}
-        handler = 'test'
-        server = 'localfoo'
+        service = 'test-service'
         meta_state = {
             'state': {'foo': ['${}$'.format(uuid1), '${}$'.format(uuid2)]},
-            'handler': handler,
-            'server': server,
+            'service': service,
             'task_ids': [uuid1, uuid2],
             'descriptors': [
                 descriptor_1,
@@ -199,8 +206,7 @@ class TestState:
         uuid = str(uuid4())
         redis.set(name='state:{}'.format(uuid),
                   value=json.dumps(meta_state))
-        etlhandler = ETLHandler.factory(handler=handler,
-                                        server=server,
+        etlhandler = ETLHandler.factory(service_name=service,
                                         auth={})
         etlhandler.create_redis_entry(task_id=uuid1,
                                       file_path='',
@@ -223,7 +229,7 @@ class TestState:
 
         monkeypatch.setattr(celery, 'AsyncResult', FakeAsyncResult)
         rv = test_client.post('/state/{}'.format(uuid),
-                              data=flask.json.dumps({'auth': {'token': ''}}))
+                              data=flask.json.dumps({'auth': {'token': 'test_token'}}))
         body = flask.json.loads(rv.get_data())
         assert 202 == rv.status_code, body
         assert not body

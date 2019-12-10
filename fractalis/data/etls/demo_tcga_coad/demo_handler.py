@@ -1,9 +1,10 @@
 from fractalis.data.etlhandler import ETLHandler
+from fractalis.data_services_config import Handler
 
 
 class TCGADemoHandler(ETLHandler):
 
-    _handler = 'demo_tcga_coad'
+    _handler = Handler.DEMO_TCGA_COAD
 
     @staticmethod
     def make_label(descriptor):

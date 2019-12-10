@@ -43,4 +43,13 @@ OIDC_OFFLINE_TOKEN = None
 OIDC_SERVER_URL = 'https://keycloak-example.com/auth/realms/transmart-realm/'
 OIDC_CLIENT_ID = 'transmart-client'
 
+DATA_SERVICES = {
+    'data_services': {
+        'test-service': {
+            'handler': 'test',
+            'server': 'http://localfoo'
+        }
+    }
+}
+
 # DO NOT MODIFY THIS FILE DIRECTLY

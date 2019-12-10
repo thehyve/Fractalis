@@ -28,8 +28,7 @@ class TestAnalytics:
         app.config['AUTHORIZATION_DISABLED'] = True
         return lambda random, wait=0: test_client.post(
             '/data?wait={}'.format(wait), data=flask.json.dumps(dict(
-                handler='test',
-                server='localhost:1234',
+                service='test-service',
                 auth={'token': '7746391376142672192764'},
                 descriptors=[
                     {

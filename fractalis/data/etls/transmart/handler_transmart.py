@@ -9,7 +9,7 @@ import requests
 
 from fractalis import app
 from fractalis.data.etlhandler import ETLHandler
-
+from fractalis.data_services_config import Handler
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class TransmartHandler(ETLHandler):
     Project URL: https://github.com/transmart
     """
 
-    _handler = 'transmart'
+    _handler = Handler.TRANSMART
 
     @staticmethod
     def make_label(descriptor: dict) -> str:

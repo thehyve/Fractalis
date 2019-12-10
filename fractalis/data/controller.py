@@ -7,13 +7,12 @@ from uuid import UUID
 
 from flask import Blueprint, session, request, jsonify, Response
 
+from fractalis import celery, redis
 from fractalis.authorization import authorized
 from fractalis.data.etlhandler import ETLHandler
-from fractalis.data.schema import create_data_schema
-from fractalis.validator import validate_json, validate_schema
-from fractalis import celery, redis
+from fractalis.schema import CreateDataSchema
 from fractalis.sync import remove_data
-
+from fractalis.validator import validate_json, validate_schema
 
 data_blueprint = Blueprint('data_blueprint', __name__)
 logger = logging.getLogger(__name__)
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @data_blueprint.route('', methods=['POST'])
 @validate_json
-@validate_schema(create_data_schema)
+@validate_schema(CreateDataSchema)
 @authorized
 def create_data_task() -> Tuple[Response, int]:
     """Submit new ETL tasks based on the payload of the request body.
@@ -32,8 +31,7 @@ def create_data_task() -> Tuple[Response, int]:
     wait = request.args.get('wait') == '1'
     payload = request.get_json(force=True)
     try:
-        etl_handler = ETLHandler.factory(handler=payload['handler'],
-                                         server=payload['server'],
+        etl_handler = ETLHandler.factory(service_name=payload['service'],
                                          auth=payload['auth'])
     except Exception as e:
         return jsonify({'error': str(e)}), 400
