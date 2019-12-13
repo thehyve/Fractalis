@@ -19,22 +19,9 @@ class TestState:
         monkeypatch.setenv('FRACTALIS_CONFIG', './tests/test_config.py')
         from fractalis import app
         app.testing = True
-        services_config = {
-            'data_services': {
-                'test-service': {
-                    'handler': 'test',
-                    'server': 'http://localfoo'
-                }
-            }
-        }
-        app.data_services_config = DataServices(**services_config)
-        app.testing = True
-        app.data_services_config = DataServices(**services_config)
         with app.test_client() as test_client:
-            app.data_services_config = DataServices(**services_config)
             yield test_client
             sync.cleanup_all()
-            app.data_services_config = DataServices(**services_config)
 
     def test_400_if_no_task_id_in_payload(self, test_client):
         payload = {

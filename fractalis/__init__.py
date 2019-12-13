@@ -40,11 +40,13 @@ log = logging.getLogger(__name__)
 if default_config:
     log.warning("Environment Variable FRACTALIS_CONFIG not set. Falling back "
                 "to default settings. This is not a good idea in production!")
+
 try:
-    data_services_config = DataServices(**app.config['DATA_SERVICES'])
+    # validate 'DATA_SERVICES' configuration and store it in the app.config as DATA_SERVICES_CONFIG
+    app.config['DATA_SERVICES_CONFIG'] = DataServices(**app.config['DATA_SERVICES'])
 except Exception as e:
-    log.error(f'Error parsing config file: {e}')
-    raise ConfigException(f'Error parsing config file: {e}')
+    log.error(f'Error parsing config file. "DATA_SERVICES" not configured correctly." ')
+    raise ConfigException(f'Error parsing config file. "DATA_SERVICES" not configured correctly.')
 
 # Plugin that assigns every request an id
 RequestID(app)

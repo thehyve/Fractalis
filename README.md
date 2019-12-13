@@ -31,6 +31,32 @@ Tip: Use the [default settings](fractalis/config.py) as an example for your own 
 Please note, that all this files combines [Flask settings](http://flask.pocoo.org/docs/0.12/config/), [Celery settings](http://docs.celeryproject.org/en/latest/userguide/configuration.html), and Fractalis settings, which are all listed and documented within this file. 
 Please don't overwrite default settings if you don't know what you are doing. This might have severe implications for security or might cause Fractalis to not work correctly.
 
+See a sample configuration in [tests](tests/config) directory.
+
+
+#### Data services
+
+Required part of the configuration is a list of all supported data sources, together with a mapping to a handler type:
+
+```
+DATA_SERVICES = {
+    'data_services': {
+        '<name-of-service-1>': {
+            'handler': '<handler-type-1>',
+            'server': '<service-1-url>'
+        },
+        '<name-of-service-2>': {
+            'handler': '<handler-type-2>',
+            'server': '<service-2-url>'
+        }
+    }
+}
+```
+
+
+Data services config model is defined in [data_services_config.py](fractalis/data_services_config.py).
+Name of the service is a one of the required parameters of data request (see the swagger API documentation).
+
 
 #### Authorization
 
@@ -43,6 +69,8 @@ Configuration options for authorization, currently specific to the transmart han
 | OIDC_SERVER_URL        |               | OIDC server URL, including the realm e.g. https://keycloak-example.com/auth/realms/transmart-realm/     |
 | OIDC_CLIENT_ID         |               | ID of the OIDC client                                                                                   |
 
+
+The identity provider configured here will be used for all data services.
 
 ### Add support for new services
 Please refer to [this document](fractalis/data).

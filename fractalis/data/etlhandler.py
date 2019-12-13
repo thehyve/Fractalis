@@ -1,16 +1,16 @@
 """This module provides the ETLHandler class."""
 
-import os
 import abc
 import json
 import logging
-from uuid import uuid4
+import os
 from typing import List, Union
+from uuid import uuid4
 
+from fractalis import app, redis, celery
 from fractalis.cleanup import janitor
-from fractalis import app, redis, celery, data_services_config
 from fractalis.data.etl import ETL
-from fractalis.data_services_config import Handler, DataService
+from fractalis.data_services_config import Handler, DataService, DataServices
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,8 @@ class ETLHandler(metaclass=abc.ABCMeta):
         :return: An instance of an implementation of ETLHandler that returns
         True for self.can_handle
         """
-        service: DataService = data_services_config.data_services.get(service_name, None)
+        services: DataServices = app.config['DATA_SERVICES_CONFIG']
+        service: DataService = services.data_services.get(service_name, None)
         if not service:
             error = f'No data service configuration found for service: {service_name}'
             logger.error(error)
