@@ -18,8 +18,8 @@ class RedisSession(CallbackDict, SessionMixin):
             initial = {
                 'data_tasks': [],
                 'analytic_tasks': [],
-                'subsets': [],
-                'state_access': {}
+                'state_access': {},
+                'user_id': None
             }
 
         def on_update(self):

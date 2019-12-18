@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 import jwt
-from flask import request, jsonify
+from flask import request, jsonify, session
 import logging
 import json
 
@@ -36,11 +36,11 @@ def authorized(f):
             raise Unauthorized(error)
         decoded_token = jwt.decode(token, verify=False)
         client_id = app.config.get('OIDC_CLIENT_ID')
-        url = app.config.get('OIDC_SERVER_URL')
-        # user = validate_user(decoded_token) #TODO - validate with session user
-        identity_provider_url = validate_identity_provider_url(decoded_token, url)
+        sub = decoded_token.get("sub")
+        validate_user(sub)
+        identity_provider_url = validate_identity_provider_url(decoded_token)
         validate_token(token, client_id, identity_provider_url)
-        logger.info(f'Connected: {decoded_token.get("email")!r}, user id (sub): {decoded_token.get("sub")!r}')
+        logger.info(f'Connected: {decoded_token.get("email")!r}, user id (sub): {sub!r}')
 
     return _wrap
 
@@ -55,10 +55,9 @@ def get_request_token() -> Optional[str]:
     return auth.get('token')
 
 
-def validate_identity_provider_url(decoded_token, auth) -> str:
+def validate_identity_provider_url(decoded_token) -> str:
     """ Checks if the token issuer (iss) matches the identity provider url from authentication object
     :param decoded_token: decoded user token
-    :param auth: authentication object from the request arguments
     :return: identity_provider_url or
              Unauthorized if urls do not match
     """
@@ -71,19 +70,20 @@ def validate_identity_provider_url(decoded_token, auth) -> str:
     return identity_provider_url
 
 
-def validate_user(decoded_token):
-    """ Checks if the current user (in the token) matches the session user
-    :param decoded_token: decoded user token
-    :return: user or
-             Unauthorized if users do not match
+def validate_user(current_user: str):
+    """ Checks if the current user (from the token) matches the session user
+        Invalidates a session if users do not match
+    :param current_user: user from a current token
     """
-    subject = decoded_token.get('sub')
-    user = '' # TODO get session user
-    if user != subject:
-        error = "Token user does not match the session user."
-        logger.error(error)
-        raise Unauthorized(error)
-    return user
+    session_user = session['user_id']
+    if session_user:
+        if session_user == current_user:
+            return
+        else:
+            logger.info("Token user does not match the session user. Creating a new session...")
+            session.clear()
+            app.open_session()
+    session['user_id'] = current_user
 
 
 def validate_token(token: str, client_id: str, oidc_server_url: str):
