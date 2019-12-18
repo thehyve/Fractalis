@@ -5,7 +5,7 @@ import logging
 import requests
 
 from fractalis.data.etlhandler import ETLHandler
-
+from fractalis.data_services_config import Handler
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class AdaHandler(ETLHandler):
     Project URL: https://git-r3lab.uni.lu/peter.banda/ncer-pd
     """
 
-    _handler = 'ada'
+    _handler = Handler.ADA
 
     @staticmethod
     def make_label(descriptor: dict) -> str:

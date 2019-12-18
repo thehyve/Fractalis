@@ -1,13 +1,12 @@
 import os
 from datetime import timedelta
 
-# DO NOT MODIFY THIS FILE DIRECTLY
-
+# TEST configuration
 
 # Flask
 SECRET_KEY = 'OVERWRITE ME IN PRODUCTION!!!'
 DEBUG = False
-TESTING = False
+TESTING = True
 REDIS_HOST = 'localhost'
 REDIS_PORT = '6379'
 SESSION_COOKIE_HTTPONLY = True
@@ -35,7 +34,19 @@ FRACTALIS_LOG_CONFIG = os.path.join(os.path.dirname(__file__), 'logging.yaml')
 # Whether to verify the certs of https data sources
 ETL_VERIFY_SSL_CERT = False
 
+# Authorization
 # Disable the authorization based on the user access token. Not recommended!
 AUTHORIZATION_DISABLED = False
+# OIDC refresh token enabling an offline access
+OIDC_OFFLINE_TOKEN = 'test-token'
+OIDC_SERVER_URL = 'https://keycloak-example.com'
+OIDC_CLIENT_ID = 'test-client'
 
-# DO NOT MODIFY THIS FILE DIRECTLY
+DATA_SERVICES = {
+    'data_services': {
+        'test-service': {
+            'handler': 'test',
+            'server': 'localfoo'
+        }
+    }
+}

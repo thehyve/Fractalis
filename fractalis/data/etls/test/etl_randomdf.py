@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from fractalis.data.etl import ETL
+from fractalis.data_services_config import Handler
 
 
 class RandomDFETL(ETL):
@@ -12,8 +13,8 @@ class RandomDFETL(ETL):
     produces = 'mock'
 
     @staticmethod
-    def can_handle(handler, descriptor):
-        return handler == 'test' and \
+    def can_handle(handler: Handler, descriptor: dict):
+        return handler == Handler.TEST and \
                descriptor['data_type'] and \
                descriptor['data_type'] == 'default'
 

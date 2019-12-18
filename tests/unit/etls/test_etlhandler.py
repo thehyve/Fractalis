@@ -18,7 +18,7 @@ class TestETLHandler:
         yield redis
         sync.cleanup_all()
 
-    etlhandler = ETLHandler.factory(handler='test', server='localfoo', auth={})
+    etlhandler = ETLHandler.factory(service_name='test-service', auth={})
 
     def test_descriptor_to_hash_produces_unique_hash(self, redis):
         hash_1 = self.etlhandler.descriptor_to_hash(descriptor={'a': 1})

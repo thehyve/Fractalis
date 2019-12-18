@@ -12,6 +12,7 @@ from pandas import DataFrame
 
 from fractalis import app, redis
 from fractalis.data.check import IntegrityCheck
+from fractalis.data_services_config import Handler
 from fractalis.utils import get_cache_encrypt_key
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ class ETL(Task, metaclass=abc.ABCMeta):
         pass
 
     @staticmethod
-    def factory(handler: str, descriptor: dict) -> 'ETL':
+    def factory(handler: Handler, descriptor: dict) -> 'ETL':
         """Return an instance of the implementation ETL that can handle the
         given parameters.
         :param handler: Describes the handler. E.g.: transmart, ada

@@ -1,21 +1,19 @@
 """The /state controller."""
 
-import re
+import ast
 import json
 import logging
-import ast
-from uuid import UUID, uuid4
+import re
 from typing import Tuple
+from uuid import UUID, uuid4
 
 from flask import Blueprint, jsonify, Response, request, session
 
 from fractalis import redis, celery
-from fractalis.validator import validate_json, validate_schema
 from fractalis.analytics.task import AnalyticTask
 from fractalis.data.etlhandler import ETLHandler
-from fractalis.state.schema import request_state_access_schema, \
-    save_state_schema
-
+from fractalis.schema import SaveStateSchema, RequestStateAccessSchema
+from fractalis.validator import validate_json, validate_schema
 
 state_blueprint = Blueprint('state_blueprint', __name__)
 logger = logging.getLogger(__name__)
@@ -23,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @state_blueprint.route('', methods=['POST'])
 @validate_json
-@validate_schema(save_state_schema)
+@validate_schema(SaveStateSchema)
 def save_state() -> Tuple[Response, int]:
     """Save given payload to redis, so it can be accessed later on.
     :return: UUID linked to the saved state.
@@ -53,8 +51,7 @@ def save_state() -> Tuple[Response, int]:
     assert len(task_ids) == len(descriptors)
     meta_state = {
         'state': ast.literal_eval(state),
-        'server': payload['server'],
-        'handler': payload['handler'],
+        'service': payload['service'],
         'task_ids': task_ids,
         'descriptors': descriptors
     }
@@ -66,7 +63,7 @@ def save_state() -> Tuple[Response, int]:
 
 @state_blueprint.route('/<uuid:state_id>', methods=['POST'])
 @validate_json
-@validate_schema(request_state_access_schema)
+@validate_schema(RequestStateAccessSchema)
 def request_state_access(state_id: UUID) -> Tuple[Response, int]:
     """Traverse through the state object linked to the given UUID and look for
     data ids. Then attempt to load the data into the current session to verify
@@ -84,8 +81,7 @@ def request_state_access(state_id: UUID) -> Tuple[Response, int]:
         logger.error(error)
         return jsonify({'error': error}), 404
     meta_state = json.loads(value)
-    etl_handler = ETLHandler.factory(handler=meta_state['handler'],
-                                     server=meta_state['server'],
+    etl_handler = ETLHandler.factory(service_name=meta_state['service'],
                                      auth=payload['auth'])
     task_ids = etl_handler.handle(descriptors=meta_state['descriptors'],
                                   data_tasks=session['data_tasks'],

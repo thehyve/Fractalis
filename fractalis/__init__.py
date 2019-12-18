@@ -8,6 +8,8 @@ from flask_request_id import RequestID
 from flask_compress import Compress
 from redis import StrictRedis
 
+from fractalis.data_services_config import DataServices
+from fractalis.exceptions import ConfigException
 from fractalis.session import RedisSessionInterface
 
 app = Flask(__name__)
@@ -38,6 +40,13 @@ log = logging.getLogger(__name__)
 if default_config:
     log.warning("Environment Variable FRACTALIS_CONFIG not set. Falling back "
                 "to default settings. This is not a good idea in production!")
+
+try:
+    # validate 'DATA_SERVICES' configuration and store it in the app.config as DATA_SERVICES_CONFIG
+    app.config['DATA_SERVICES_CONFIG'] = DataServices(**app.config['DATA_SERVICES'])
+except Exception as e:
+    log.error(f'Error parsing config file. "DATA_SERVICES" not configured correctly." ')
+    raise ConfigException(f'Error parsing config file. "DATA_SERVICES" not configured correctly.')
 
 # Plugin that assigns every request an id
 RequestID(app)

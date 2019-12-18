@@ -9,19 +9,22 @@ from fractalis.data.etls.transmart.etl_highdim import HighdimETL
 
 
 # noinspection PyMissingOrEmptyDocstring,PyMissingTypeHints
+from fractalis.data_services_config import Handler
+
+
 @pytest.mark.skip
 class TestHighdimlETL:
 
     etl = HighdimETL()
 
     def test_correct_handler(self):
-        assert self.etl.can_handle(handler='transmart',
+        assert self.etl.can_handle(handler=Handler.TRANSMART,
                                    descriptor={'data_type': 'numerical_array'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'data_type': 'numerical_array'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'data_type': 'categorical'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'foo': 'bar'})
 
     def test_extract_raises_readable_if_not_200(self):

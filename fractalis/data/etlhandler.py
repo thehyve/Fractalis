@@ -1,16 +1,16 @@
 """This module provides the ETLHandler class."""
 
-import os
 import abc
 import json
 import logging
-from uuid import uuid4
+import os
 from typing import List, Union
+from uuid import uuid4
 
-from fractalis.cleanup import janitor
 from fractalis import app, redis, celery
+from fractalis.cleanup import janitor
 from fractalis.data.etl import ETL
-
+from fractalis.data_services_config import Handler, DataService, DataServices
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class ETLHandler(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def _handler(self) -> str:
+    def _handler(self) -> Handler:
         """Used by self.can_handle to check whether the current implementation
         is able to handle the incoming request.
         """
@@ -192,24 +192,29 @@ class ETLHandler(metaclass=abc.ABCMeta):
         return task_ids
 
     @staticmethod
-    def factory(handler: str, server: str, auth: dict) -> 'ETLHandler':
+    def factory(service_name: str, auth: dict) -> 'ETLHandler':
         """Return an instance of the implementation of ETLHandler that can
         handle the given parameters.
-        :param handler: Describes the handler. E.g.: transmart, ada
-        :param server: The server to download data from.
+        :param service_name: The service configuration specifying the server and the handler.
         :param auth: Contains credentials to authenticate with the API.
         :return: An instance of an implementation of ETLHandler that returns
         True for self.can_handle
         """
+        services: DataServices = app.config['DATA_SERVICES_CONFIG']
+        service: DataService = services.data_services.get(service_name, None)
+        if not service:
+            error = f'No data service configuration found for service: {service_name}'
+            logger.error(error)
+            raise ValueError(error)
         from . import HANDLER_REGISTRY
-        for Handler in HANDLER_REGISTRY:
-            if Handler.can_handle(handler):
-                return Handler(server, auth)
+        for HANDLER in HANDLER_REGISTRY:
+            if HANDLER.can_handle(service.handler):
+                return HANDLER(service.server, auth)
         raise NotImplementedError(
-            "No ETLHandler implementation found for: '{}'".format(handler))
+            "No ETLHandler implementation found for: '{}'".format(service.handler))
 
     @classmethod
-    def can_handle(cls, handler: str) -> bool:
+    def can_handle(cls, handler: Handler) -> bool:
         """Check whether this implementation of ETLHandler can handle the given
         parameters.
         :param handler: Describes the handler. E.g.: transmart, ada

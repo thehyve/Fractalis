@@ -8,8 +8,8 @@ from flask import Blueprint, session, request, jsonify
 from flask.wrappers import Response
 
 from fractalis import celery, app
+from fractalis.schema import CreateTaskSchema
 from fractalis.validator import validate_json, validate_schema
-from fractalis.analytics.schema import create_task_schema
 from fractalis.analytics.task import AnalyticTask
 
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @analytics_blueprint.route('', methods=['POST'])
 @validate_json
-@validate_schema(create_task_schema)
+@validate_schema(CreateTaskSchema)
 def create_task() -> Tuple[Response, int]:
     """Create a new analytics task based on the parameters in the POST body.
     See doc/api/ for more information.

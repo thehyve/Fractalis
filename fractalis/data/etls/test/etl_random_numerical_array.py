@@ -6,6 +6,7 @@ import string
 import random
 
 from fractalis.data.etl import ETL
+from fractalis.data_services_config import Handler
 
 
 class RandomNumericalArrayETL(ETL):
@@ -14,8 +15,8 @@ class RandomNumericalArrayETL(ETL):
     produces = 'numerical_array'
 
     @staticmethod
-    def can_handle(handler: str, descriptor: dict) -> bool:
-        return handler == 'test' and \
+    def can_handle(handler: Handler, descriptor: dict) -> bool:
+        return handler == Handler.TEST and \
                descriptor['data_type'] == 'numerical_array'
 
     def extract(self, server: str,

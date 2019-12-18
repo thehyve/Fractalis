@@ -9,6 +9,9 @@ from fractalis.data.etls.transmart.etl_categorical import CategoricalETL
 
 
 # noinspection PyMissingOrEmptyDocstring,PyMissingTypeHints
+from fractalis.data_services_config import Handler
+
+
 class TestCategoricalETL:
 
     etl = CategoricalETL()
@@ -18,13 +21,13 @@ class TestCategoricalETL:
     )
 
     def test_correct_handler(self):
-        assert self.etl.can_handle(handler='transmart',
+        assert self.etl.can_handle(handler=Handler.TRANSMART,
                                    descriptor={'data_type': 'categorical'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'data_type': 'categorical'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'data_type': 'categorical'})
-        assert not self.etl.can_handle(handler='ada',
+        assert not self.etl.can_handle(handler=Handler.ADA,
                                        descriptor={'foo': 'bar'})
 
     def test_extract_raises_readable_if_not_200(self):

@@ -1,9 +1,10 @@
 from fractalis.data.etlhandler import ETLHandler
+from fractalis.data_services_config import Handler
 
 
 class DemoHandler(ETLHandler):
 
-    _handler = 'demo_wine_quality'
+    _handler = Handler.DEMO_WINE_QUALITY
 
     @staticmethod
     def make_label(descriptor):

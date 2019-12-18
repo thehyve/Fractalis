@@ -7,6 +7,7 @@ from urllib.parse import unquote_plus
 import requests
 
 from fractalis.data.etl import ETL
+from fractalis.data_services_config import Handler
 
 logger = logging.getLogger(__name__)
 
@@ -126,8 +127,8 @@ def create_etl_type(name_, produces_, field_name):
         produces = produces_
 
         @staticmethod
-        def can_handle(handler: str, descriptor: dict) -> bool:
-            return handler == 'transmart' and descriptor['data_type'] == produces_
+        def can_handle(handler: Handler, descriptor: dict) -> bool:
+            return handler == Handler.TRANSMART and descriptor['data_type'] == produces_
 
         def extract(self, server: str, token: str, descriptor: dict) -> dict:
             return extract_data(server=server, descriptor=descriptor, token=token)
