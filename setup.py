@@ -3,11 +3,11 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='fractalis',
+    name='fractalis-thehyve',
     packages=find_packages(),
     author='Sascha Herzinger',
     author_email='sascha.herzinger@uni.lu',
-    url='https://git-r3lab.uni.lu/Fractalis/fractalis',
+    url='https://github.com/thehyve/Fractalis',
     version='1.3.1.hyve1',
     license='Apache2.0',
     include_package_data=True,

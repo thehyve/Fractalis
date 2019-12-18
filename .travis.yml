@@ -41,3 +41,14 @@ script:
   - cat ${FRACTALIS_CONFIG}
   - celery worker -D -A fractalis:celery -l debug --concurrency=1
   - python setup.py test
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
+  user: ewelinagr
+  password:
+    secure: fCcvxOMpF0/9Eyglm4wgTKt9TLo0GL7qq31FpyCe3iS8v1iPUu3zvyMZukJaWDdRGzAhupflsHhgnoDDuoGI5SgVACJcTgXXt9zaoKs2XwQHDXs+nVf7sIhkwbMuqcoCKMjFi5FCSb8JtRVExHN8R7OfceYR1Fpxg+VrmwxTc/lIaf0PxHuZWsjEx4W4QQdfBnBUhxWbTDh/FDVwH94hxTbukJl13wXa/T/FlsGeKYbFkXu3CG1Mw8/j+QXEQQiU/hAvRbVD1iQJQhtK/lJjbeauEuCN4OQc6ulAqMbV3IEGCdWwbnHY84x6eJ0jEX95MMyT7X3TxL3BVD9JRxedkrEch29apnX2KTpwpuCyFk+BDBD3kFY0KQM78v6Zlj+7iflXbhTKsZxf+ccJj8Vkvw2OJnRIsDVC/Jfpr/hEH85urZ2AHJzxGxtGO8JsmmYRqaFL7mS7RIkMkvhppiKlo5MK0liNDJKHrTmNSEkbXoTtKl0V58TKu/ohDYo+ScAbfMc1+yFtBlw3K2eXtSnKBL1POVyz78H/pdnBf13SlKJtL55DYn6i0PhR7zdkCMdsxqhmt5pTpLYIkG2aFA+gRmHsSFakZ4NwcCGpn01q0yYa8+6YuCgd97BSpTqzEnCwnHkgrsmvdOW88nu0YTpoMKY65m0F8BT2uk5Etg/cuvs=
+  on:
+    tags: true
+    branch: dev
