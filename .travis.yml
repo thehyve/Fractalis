@@ -29,6 +29,7 @@ env:
 
 before_install:
   - sudo R -e "source(\"https://bioconductor.org/biocLite.R\"); biocLite()"
+  - ( ( R -q -e "'Hmisc' %in% installed.packages()" | grep 'TRUE' > /dev/null ) && echo "Hmisc installed" ) || sudo R -e "source(\"https://bioconductor.org/biocLite.R\"); biocLite(\"Hmisc\")"
   - ( ( R -q -e "'limma' %in% installed.packages()" | grep 'TRUE' > /dev/null ) && echo "limma installed" ) || sudo R -e "source(\"https://bioconductor.org/biocLite.R\"); biocLite(\"limma\")"
   - ( ( R -q -e "'DESeq2' %in% installed.packages()" | grep 'TRUE' > /dev/null ) && echo "DESeq2 installed" ) || sudo R -e "source(\"https://bioconductor.org/biocLite.R\"); biocLite(\"DESeq2\")"
 
