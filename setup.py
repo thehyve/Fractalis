@@ -32,7 +32,7 @@ setup(
         'pycryptodomex==3.9.4',
         'rpy2==2.9.5',  # 3.2.2 requires some changes in array_stats.py
         'tzlocal',
-        'cryptography==2.6.1',
+        'cryptography==3.2',
         'pyjwt==1.7.1',
         'pydantic==1.2'
     ],
